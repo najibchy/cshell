@@ -11,5 +11,4 @@
  help | List the functions | `> help <function_name>` |
  exit | Exit the shell | `> exit` |
 
-## Note
- This is an initial and preview of phase of the shell
+## This is an initial and preview of phase of the shell

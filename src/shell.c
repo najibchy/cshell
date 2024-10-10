@@ -6,36 +6,47 @@
 #include <windows.h>
 
 
-#define LSH_RL_BUFSIZE 1024
-#define LSH_TOK_BUFSIZE 64;
+#define LSH_RL_BUFSIZE 1024 //Initial size of line buffer size
+#define LSH_TOK_BUFSIZE 64 //Initial size of token buffer size
 #define LSH_TOKEN_DELIM " \t\r\n\a"
 
-
+/* 
+Functions Declarations
+*/
 int lsh_cd(char ** args);
 int lsh_help(char ** args);
 int lsh_exit(char ** args);
 
+/* 
+List of commands
+*/
 char *builtin_str[] =  {
     "cd",
     "help",
     "exit"
 };
 
+/* 
+List of functions
+*/
 int (*builtin_func[]) (char **) = {
     &lsh_cd,
     &lsh_help,
     &lsh_exit
 };
 
+// Determine number of builtin functions
 int lsh_num_builtins(){
     return sizeof(builtin_str) / sizeof(char *);
 }
 
 int lsh_cd(char ** args){
+    // Show error if the second argument is NULL
     if( args[1] == NULL){
         fprintf(stderr, "lsh: error");
     }
     else {
+        //Change the directory to the second argument
         if (chdir(args[1]) != 0){
             perror("lsh");
         }
@@ -44,15 +55,17 @@ int lsh_cd(char ** args){
 }
 
 int lsh_exit(char ** args){
+    //Exit the program
     return 0;
 };
 
 int lsh_help(char ** args){
-    printf("Najib Chowdhury's LSH\n");
-    printf("Type the name and arguments\n");
+    printf("Najib Chowdhury's Shell\n");
+    printf("Type the function name and arguments\n");
 
+    // Loops to determine all the builtin functions
     for(int i = 0; i < lsh_num_builtins(); i++){
-        printf(" %s\n", builtin_str[i]);
+        printf("%d: %s\n", i, builtin_str[i]); 
     }
 
     printf("Use the command for information");
@@ -60,6 +73,9 @@ int lsh_help(char ** args){
 }
 
 int lsh_launch(char **args) {
+    /* Windows API for creating new process
+    https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa 
+    It is equivalent to fork() in Linux*/
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     DWORD status;  // Change status to DWORD
@@ -135,7 +151,9 @@ char *lsh_read_line(void){
     }
 
     while(1){
+        // Read the character
         c = getchar();
+        // Replace EOF(End of File) and newlines with NULL character
         if (c == EOF || c == '\n'){
             buffer[position] = '\0';
             return buffer;
@@ -143,10 +161,12 @@ char *lsh_read_line(void){
             buffer[position] = c;
         }
         position++;
+        //Reallocate memory if buffer size is exceeded
         if (position >= bufsize){
             bufsize += LSH_RL_BUFSIZE;
             buffer = realloc(buffer, bufsize);
             if (!buffer){
+                // Show error if reallocation fails
                 fprintf(stderr, "lsh: allocation error\n");
                 exit(EXIT_FAILURE);
             }
@@ -157,20 +177,21 @@ char *lsh_read_line(void){
 char **lsh_split_line(char *line){
     int bufsize = LSH_TOK_BUFSIZE;
     int position = 0;
-    char **tokens = malloc(bufsize * sizeof(char*));
+    char **tokens = malloc(bufsize * sizeof(char*)); //Allocate memory for tokens
     char *token;
 
     if (!tokens){
+        //Show error if reallocation fails
         fprintf(stderr,"lsh: allocation error\n");
         exit(EXIT_FAILURE);
     }
-    token = strtok(line, LSH_TOKEN_DELIM);
+    token = strtok(line, LSH_TOKEN_DELIM); //Split the prompt into tokens
     while (token != NULL){
         tokens[position] = token;
         position++;
 
         if (position >= bufsize){
-            bufsize += LSH_TOK_BUFSIZE;
+            bufsize += LSH_TOK_BUFSIZE; //See if memory is exceeded
             tokens = realloc(tokens, bufsize * sizeof(char*));
             if (!tokens){
                 fprintf(stderr, "error");
@@ -185,6 +206,7 @@ char **lsh_split_line(char *line){
 }
 
 void lsh_loop(void){
+    //Read, parse and execute the input
     char *line;
     char **args;
     int status;
@@ -201,7 +223,9 @@ void lsh_loop(void){
 }
 
 int main(int argc, char **argv){
-    
+    //Load the configuration files
+
+    //Run command loop
     lsh_loop();
 
     return EXIT_SUCCESS;
